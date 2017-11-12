@@ -4,7 +4,7 @@ import unittest
 from operations.bin_ops import BIN_OPS
 
 # An id function is useful for testing.
-eval_fn = lambda _, x: x
+eval_fn = lambda x, _: x
 str_fn = lambda x: str(x)
 env = {}
 
