@@ -10,8 +10,10 @@ def print_comp(str_fn, left, ops, comparators):
     l = str_fn(left)
     rs = []
     for op, c in zip(ops, comparators):
-        COMPARATOR_OPS[type(op)].pprint(str_fn, op) + str_fn(c)
-    r = "".join(rs)
+        print(op, c, l)
+        rs.append(COMPARATOR_OPS[type(op)].pprint(str_fn, left, c))
+    r = " ".join(rs)
+    return r
 
 ComparatorOp = namedtuple('ComparatorOp', ['evaluate', 'pprint'])
 

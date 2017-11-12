@@ -1,18 +1,28 @@
 import ast
 from collections import ChainMap
 from collections import namedtuple
+from types import ModuleType
 
 from operations.Lambda import Lambda
 from operations.bin_ops import BIN_OPS
+from operations.bool_ops import boolops
 from operations.call import call
 from operations.comparator_ops import print_comp, eval_comp
+from operations.generate import generate, str_generate
+from operations.slices import Slices
 from operations.unary_ops import UNARY_OPS
+
+blacklist = ["sys", "os"]
 
 
 def eval_expr(node, env):
     if node is not None:
         if type(node) in EXPRS:
-            return EXPRS[type(node)].evaluate(**ChainMap({"env": env, "eval_fn": eval_expr}, dict(ast.iter_fields(node))))
+            t = EXPRS[type(node)].evaluate(**ChainMap({"env": env, "eval_fn": eval_expr}, dict(ast.iter_fields(node))))
+            if type(t) is ModuleType and t.__name__ in blacklist or hasattr(t,
+                                                                            "__module__") and t.__module__ in blacklist or t.__class__.__module__ in blacklist:
+                raise Exception("naughty")
+            return t
         else:
             try:
                 raise Exception(ast.dump(node))
@@ -20,6 +30,7 @@ def eval_expr(node, env):
                 raise Exception(node)
     else:
         return None
+
 
 def str_expr(node):
     if node is not None:
@@ -33,28 +44,34 @@ def str_expr(node):
     else:
         return None
 
+
 def raise_(text):
     raise Exception(text)
 
 Expr = namedtuple('Expr', ['evaluate', 'pprint'])
 
 EXPRS = {
-    ast.BinOp: Expr(
+    ast.BinOp       : Expr(
         evaluate=lambda env, eval_fn, op, left, right: BIN_OPS[type(op)].evaluate(env, eval_fn, left, right),
         pprint=lambda str_fn, op, left, right: "(" + BIN_OPS[type(op)].pprint(str_fn, left, right) + ")",
     ),
 
-    ast.UnaryOp: Expr(
+    ast.UnaryOp     : Expr(
         evaluate=lambda env, eval_fn, op, operand: UNARY_OPS[type(op)].evaluate(env, eval_fn, operand),
         pprint=lambda str_fn, op, operand: UNARY_OPS[type(op)].pprint(str_fn, op) + str_fn(operand),
     ),
 
-    ast.Compare: Expr(
+    ast.BoolOp      : Expr(
+        evaluate=lambda env, eval_fn, op, values: boolops[type(op)].evaluate(env, eval_fn, values),
+        pprint=lambda str_fn, op, values: boolops[type(op)].pprint(str_fn, values),
+    ),
+
+    ast.Compare     : Expr(
         evaluate=eval_comp,
         pprint=print_comp,
     ),
 
-    ast.Name: Expr(
+    ast.Name        : Expr(
         evaluate=lambda env, eval_fn, ctx, id: env[id],
         pprint=lambda str_fn, ctx, id: id,
     ),
@@ -64,57 +81,88 @@ EXPRS = {
         pprint=lambda str_fn, value: str(value),
     ),
 
-    ast.Num: Expr(
+    ast.Num         : Expr(
         evaluate=lambda env, eval_fn, n: n,
         pprint=lambda str_fn, n: str(n),
     ),
 
-    ast.Str: Expr(
+    ast.Str         : Expr(
         evaluate=lambda env, eval_fn, s: s,
         pprint=lambda str_fn, s: "'" + s + "'",
     ),
 
-    ast.List: Expr(
+    ast.List        : Expr(
         evaluate=lambda env, eval_fn, ctx, elts: list(eval_fn(elt, env) for elt in elts),
         pprint=lambda str_fn, ctx, elts: "[" + ", ".join(map(str_fn, elts)) + "]",
     ),
 
-    ast.Set: Expr(
+    ast.Set         : Expr(
         evaluate=lambda env, eval_fn, elts: {eval_fn(elt, env) for elt in elts},
         pprint=lambda str_fn, elts: "{" + ",".join([str_fn(elt) for elt in elts]) + "}",
     ),
 
-    ast.Tuple: Expr(
+    ast.Tuple       : Expr(
         evaluate=lambda env, eval_fn, ctx, elts: tuple(eval_fn(elt, env) for elt in elts),
         pprint=lambda str_fn, ctx, elts: "(" + ", ".join([str_fn(elt) for elt in elts]) + ")",
     ),
 
-    ast.Dict: Expr(
+    ast.Dict        : Expr(
         evaluate=lambda env, eval_fn, keys, values: {eval_fn(key, env): eval_fn(value, env) for key, value in
                                                      zip(keys, values)},
         pprint=lambda str_fn, keys, values: "{" + ", ".join([str_fn(key) + ":" +
                                                              str_fn(value) for key, value in zip(keys, values)]) + "}",
     ),
 
-    ast.Lambda: Expr(
+    ast.Lambda      : Expr(
         evaluate=lambda env, eval_fn, args, body: Lambda(body, dict(ast.iter_fields(args)), eval_fn, str_expr),
         pprint=lambda str_fn, args, body: "lambda " + ",".join(
             [x.arg for y in dict(ast.iter_fields(args)).values() if y for x in y]) + ": " + str_fn(body),
     ),
 
-    ast.Attribute: Expr(
+    ast.Attribute   : Expr(
         evaluate=lambda env, eval_fn, value, attr, ctx:
         (getattr(eval_fn(value, env), attr) if isinstance(value, ast.Attribute) else getattr(eval_fn(value, env), attr))
-        if not attr.startswith("_") else raise_("access to private fields is disallowed"),
+        if not attr.startswith("__") else raise_("access to private fields is disallowed"),
         pprint=lambda str_fn, value, attr, ctx: str_fn(value) + "." + attr
     ),
 
-    ast.Call: Expr(
+    ast.Call        : Expr(
         evaluate=lambda env, eval_fn, func, args, keywords: call(func, args, keywords, env),
         pprint=lambda str_fn, func, args, keywords:
-        str_fn(func) + "(" + ", ".join(
-            (list(map(str_fn, args)) if args else []) + [
-                a + "=" + str_fn(b) for a, b in [(keyword.arg, keyword.value) for keyword in keywords]]) + ")",
-    )
+        str_fn(func) + "("
+        + ", ".join((list(map(str_fn, args)) if args else []) +
+                    [a + "=" + str_fn(b) for a, b in [(keyword.arg, keyword.value) for keyword in keywords]]) + ")",
+    ),
 
+    ast.ListComp    : Expr(
+        evaluate=lambda env, eval_fn, elt, generators:
+        [eval_fn(elt, genenv) for genenv in generate(generators, env, eval_fn)],
+        pprint=lambda str_fn, elt, generators: "[" + str_fn(elt) + " for " + str_generate(generators, str_fn) + "]",
+    ),
+
+    ast.DictComp    : Expr(
+        evaluate=lambda env, eval_fn, key, value, generators:
+        {eval_fn(key, genenv): eval_fn(value, genenv) for genenv in generate(generators, env, eval_fn)},
+        pprint=lambda str_fn, key, value, generators:
+        "{" + str_fn(key) + ":" + str_fn(value) + " for " + str_generate(generators, str_fn) + "}",
+    ),
+
+    ast.SetComp     : Expr(
+        evaluate=lambda env, eval_fn, elt, generators:
+        {eval_fn(elt, genenv) for genenv in generate(generators, env, eval_fn)},
+        pprint=lambda str_fn, elt, generators: "{" + str_fn(elt) + " for " + str_generate(generators, str_fn) + "}",
+    ),
+
+    ast.Subscript   : Expr(
+        evaluate=lambda env, eval_fn, ctx, value, slice:
+        Slices[type(slice)].evaluate(eval_fn=eval_fn, value_=value, env=env, **dict(ast.iter_fields(slice))),
+        pprint=lambda str_fn, ctx, value, slice:
+        Slices[type(slice)].pprint(str_fn=str_fn, value_=value, **dict(ast.iter_fields(slice))),
+    ),
+
+    ast.IfExp       : Expr(
+        evaluate=lambda env, eval_fn, test, body, orelse:
+        eval_fn(body, env) if eval_fn(test, env) else eval_fn(orelse, env),
+        pprint=lambda str_fn, test, body, orelse: str_fn(body) + " if " + str_fn(test) + " else " + str_fn(orelse),
+    ),
 }
