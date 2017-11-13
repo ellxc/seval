@@ -30,7 +30,6 @@ Notes:
 """
 
 import atexit
-import builtins
 
 import __main__
 
@@ -65,6 +64,8 @@ class Completer:
             self.use_main_ns = 0
             self.namespace = namespace
 
+        self.last = ""
+
     def complete(self, text, state):
         """Return the next possible completion for 'text'.
 
@@ -79,7 +80,7 @@ class Completer:
             if state == 0:
                 if _readline_available:
                     readline.insert_text('\t')
-                    readline.redisplay()
+                    # readline.redisplay()
                     return ''
                 else:
                     return '\t'
@@ -110,7 +111,7 @@ class Completer:
         """
         import keyword
         matches = []
-        seen = {"__builtins__"}
+        seen = set()
         n = len(text)
         for word in keyword.kwlist:
             if word[:n] == text:
@@ -122,7 +123,7 @@ class Completer:
                                   'else'}:
                     word = word + ' '
                 matches.append(word)
-        for nspace in [self.namespace, builtins.__dict__]:
+        for nspace in [self.namespace]:
             for word, val in nspace.items():
                 if word[:n] == text and word not in seen:
                     seen.add(word)
