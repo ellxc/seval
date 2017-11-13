@@ -9,8 +9,11 @@ import seval
 import seval_completer
 import seval_env
 
-HISTFILE = os.path.join(os.path.expanduser("~"), "seval_history")
-
+# Make the history file hidden on UNIX type operating systems
+if sys.platform == "win32":
+    HISTFILE = os.path.join(os.path.expanduser("~"), "seval_history")
+else:
+    HISTFILE = os.path.join(os.path.expanduser("~"), ".seval_history")
 
 class SevalTTY:
     def __init__(self, env):
@@ -33,7 +36,21 @@ class SevalTTY:
         completer = seval_completer.Completer(namespace=env)
         readline.set_completer(completer.complete)
         readline.parse_and_bind('tab: complete')
-
+        self.built_ins = {
+            "print_env": (
+                self.toggle_print_env,
+                "Toggle printing the environment after each command"
+            ),
+            "env"  : (
+                self.print_env,
+                "Print the whole environment"
+            ),
+            "help" : (
+                self.print_help,
+                "Display this message"
+            )
+        }
+        
         self.seval = seval.Seval()
         self.env = env
 
@@ -43,34 +60,39 @@ class SevalTTY:
         readline.set_history_length(1000)
         readline.write_history_file(HISTFILE)
 
-    def built_ins(self, line):
-        """Simple parsing for some built in functions."""
-        if line == "env":
-            print(repr(self.env))
-            return True
-        if line == "myenv":
-            globalenv = seval_env.SevalEnv.globalenv
-            myenv = {k: v for k, v in self.env.items() if k not in globalenv}
-            print(repr(myenv))
-            return True
+    def print_env(self):
+        print(repr(self.env))
 
-        elif line == "help":
-            print("This is the seval interpretter. Control-D to exit.")
-            print("  'env'    Print the whole environment")
-            print("  'myenv'  Print the difference between the starting environment and the new environment")
-            print("  'help'   Display this message")
-            return True
+    def toggle_print_env(self):
+        if 'print_env' in self.env:
+            self.env['print_env'] = (not self.env['print_env'])
+        else:
+            self.env['print_env'] = True
+        print("print_env = {}".format(self.env['print_env']))
+        
+    def print_help(self):
+        print("This is the seval interpretter. Control-D to exit.")
+        for (k,(_,h)) in self.built_ins.items():
+            print("  {:15s} {}".format(k, h))
+
+    def parse_builtins(self, line):
+        """Simple parsing for some built in functions."""
+        for (k,v) in self.built_ins.items():
+            if k == line:
+                v[0]()
+                return True
         return False
 
     def repl(self):
         while True:
             try:
                 line = input(">>> ")
-                if self.built_ins(line):
+                if self.parse_builtins(line):
                     continue
                 else:
                     e, tenv = self.seval.parse_string(line, self.env)
-                    print(tenv)
+                    if('print_env' in tenv and tenv['print_env']):
+                        print(tenv)
                     self.env.update(tenv)
                 for exp in e:
                     print("{}: {}".format(type(exp).__name__, repr(exp)))
@@ -91,10 +113,6 @@ class SevalTTY:
 
             except Exception as e:
                 print("{}: {}".format(type(e).__name__, e))
-
-
-            except:
-                print('wtf')
 
 
 if __name__ == "__main__":

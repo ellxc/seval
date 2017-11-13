@@ -23,3 +23,11 @@ writing macros and plugins for [piperbot](https://github.com/ellxc/piperbot).
 `seval` has not been formally tested, and may have bugs. It has been implemented
 to attempt to ensure safe sandboxed execution, but there could be bugs. Use at
 your own risk.
+
+## `repl.py`
+
+There is a `repl` using a GNU Readline interface. You'll need a readline
+implementation installed from pip. `anyreadline` is a metapackage which installs
+a readline library appropriate for your operating system. The `gnureadline`
+package is incompatible with Windows.
+
