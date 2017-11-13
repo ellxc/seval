@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """
 """
+import keyword
 import sys
 import traceback
 
@@ -25,12 +26,12 @@ class BodgedPythonCompleter(PythonCompleter):
                 name, _, _ = document.text.partition(".")
             else:
                 name = x.text
-            if name in self.get_globals() or name in self.get_locals():
+            if name in self.get_globals() or name in self.get_locals() or keyword.iskeyword(name):
                 yield x
 
 
 def _lex_python_traceback(tb):
-    " Return token list for traceback string. "
+    """ Return token list for traceback string. """
     lexer = PythonTracebackLexer()
     return lexer.get_tokens(tb)
 
