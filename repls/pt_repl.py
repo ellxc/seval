@@ -90,6 +90,8 @@ def main():
                     print(repr(x))
             except Exception as e:
                 _handle_exception(cli=cli, e=e, style=python_input._current_style)
+    except EOFError:
+        pass
     finally:
         eventloop.close()
 

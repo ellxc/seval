@@ -1,6 +1,6 @@
 import ast
 
-from operations.evals import eval_stmt
+from nodes.evals import eval_stmt
 
 
 def parse_string(env, text):

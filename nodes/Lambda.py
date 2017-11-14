@@ -1,7 +1,7 @@
 import ast
 from collections import OrderedDict
 
-from operations.bind import bind
+from nodes.bind import bind
 from .evals import eval_expr, str_expr
 
 
