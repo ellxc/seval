@@ -85,7 +85,7 @@ def main():
             if python_code.text == "exit":
                 break
             try:
-                result, env = parse_string(python_code.text, globals_)
+                result, env = parse_string(globals_, python_code.text)
                 for x in result:
                     print(repr(x))
             except Exception as e:

@@ -1,7 +1,7 @@
 import ast
 import unittest
 
-from operations.unary_ops import UNARY_OPS
+from operations.unaryop import UNARY_OPS
 
 # An id function is useful for testing.
 eval_fn = lambda x, _: x

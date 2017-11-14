@@ -1,10 +1,12 @@
+import ast
 from collections import OrderedDict
 
 from operations.bind import bind
+from .evals import eval_expr, str_expr
 
 
 def getenv(funcname, args, vararg, kwarg, defaults, call_args, call_kwargs,
-           env, eval, kwonlyargs=None, kw_defaults=None):
+           env, kwonlyargs=None, kw_defaults=None):
     subenv = OrderedDict()
 
     for param, arg in zip(args, call_args):
@@ -75,26 +77,25 @@ def getenv(funcname, args, vararg, kwarg, defaults, call_args, call_kwargs,
     return newenv
 
 
-class Lambda():
-    def __init__(self, body, fields, eval_fn, str_fun):
-        self.body = body
-        self.fields = fields
-        self.eval = eval_fn
-        self.str_fun = str_fun
+class Lambda:
+    def __init__(self, node):
+        self.body = node.body
+        self.fields = dict(ast.iter_fields(node.args))
 
-    def __call__(self, *args, __env__=None, **kwargs):
-        if __env__ is None:
-            __env__ = dict()
-        return self.eval(self.body,
-                         getenv(funcname="<lambda>", env=__env__, call_args=args, call_kwargs=kwargs, eval=self.eval,
-                                **self.fields))
+    def __call__(self, env):
+        def wrapper(*args, **kwargs):
+            return eval_expr(
+                getenv(funcname="<lambda>", env=env, call_args=args, call_kwargs=kwargs,
+                       **self.fields), self.body)
+
+        return wrapper
 
     def __repr__(self):
         ret = []
 
         for x in self.fields["args"][slice(0, (-(len(self.fields["defaults"]))) or len(self.fields["args"]))]:
             ret.append(x.arg)
-        for x in reversed(["{}={}".format(x.arg, self.str_fun(y)) for x, y in
+        for x in reversed(["{}={}".format(x.arg, str_expr(y)) for x, y in
                            zip(reversed(self.fields["args"]), reversed(self.fields["defaults"]))]):
             ret.append(x)
 
@@ -110,8 +111,8 @@ class Lambda():
             ret.append("*")
             for p, d in zip(self.fields["kwonlyargs"], self.fields["kw_defaults"]):
                 if d is not None:
-                    ret.append("{}={}".format(p.arg, self.str_fun(d)))
+                    ret.append("{}={}".format(p.arg, str_expr(d)))
                 else:
                     ret.append(p.arg)
 
-        return "<lambda " + ", ".join(ret) + ": " + self.str_fun(self.body) + ">"
+        return "<lambda " + ", ".join(ret) + ": " + str_expr(self.body) + ">"

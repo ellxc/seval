@@ -7,7 +7,7 @@ def main():
 
     while True:
         x = input("> ")
-        responses, env = parse_string(x, env)
+        responses, env = parse_string(env, x)
         for r in responses:
             print(repr(r))
 

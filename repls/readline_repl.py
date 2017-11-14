@@ -90,7 +90,7 @@ class SevalTTY:
                 if self.parse_builtins(line):
                     continue
                 else:
-                    e, tenv = parse_string(line, self.env)
+                    e, tenv = parse_string(self.env, line)
                     if ('print_env' in tenv and tenv['print_env']):
                         print(tenv)
                     self.env.update(tenv)

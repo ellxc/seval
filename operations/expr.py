@@ -1,79 +1,47 @@
 import ast
-from collections import ChainMap
 from collections import namedtuple
-from types import ModuleType
 
-from operations.Lambda import Lambda
-from operations.bin_ops import BIN_OPS
-from operations.bool_ops import boolops
-from operations.call import call
-from operations.comparator_ops import print_comp, eval_comp
-from operations.generate import generate, str_generate
-from operations.slices import Slices
-from operations.unary_ops import UNARY_OPS
-
-blacklist = ["sys", "os"]
-
-
-def eval_expr(node, env):
-    if node is not None:
-        if type(node) in EXPRS:
-            t = EXPRS[type(node)].evaluate(**ChainMap({"env": env, "eval_fn": eval_expr}, dict(ast.iter_fields(node))))
-            if type(t) is ModuleType and t.__name__ in blacklist or hasattr(t,
-                                                                            "__module__") and t.__module__ in blacklist or t.__class__.__module__ in blacklist:
-                raise Exception("naughty")
-            return t
-        else:
-            try:
-                raise Exception(ast.dump(node))
-            except TypeError:
-                raise Exception(node)
-    else:
-        return None
-
-
-def str_expr(node):
-    if node is not None:
-        if type(node) in EXPRS:
-            return EXPRS[type(node)].pprint(**ChainMap({"str_fn": str_expr}, dict(ast.iter_fields(node))))
-        else:
-            try:
-                raise Exception(ast.dump(node))
-            except TypeError:
-                raise Exception(node)
-    else:
-        return None
+from .Lambda import Lambda
+from .evals import eval_expr, str_expr, eval_boolop, str_boolop, eval_op, str_op, eval_unaryop, str_unaryop, \
+    eval_comprehensions, str_comprehensions, eval_slice, str_slice, eval_call, str_call
 
 
 def raise_(text):
     raise Exception(text)
 
+
+def Raise_(exc, arg):
+    raise exc(arg)
+
+
+
 Expr = namedtuple('Expr', ['evaluate', 'pprint'])
 
-EXPRS = {
+exprs = {
     ast.BinOp       : Expr(
-        evaluate=lambda env, eval_fn, op, left, right: BIN_OPS[type(op)].evaluate(env, eval_fn, left, right),
-        pprint=lambda str_fn, op, left, right: "(" + BIN_OPS[type(op)].pprint(str_fn, left, right) + ")",
+        evaluate=lambda env, node: eval_op(env, node),
+        pprint=lambda str_fn, node: "(" + str_op(node) + ")",
     ),
 
     ast.UnaryOp     : Expr(
-        evaluate=lambda env, eval_fn, op, operand: UNARY_OPS[type(op)].evaluate(env, eval_fn, operand),
-        pprint=lambda str_fn, op, operand: UNARY_OPS[type(op)].pprint(str_fn, op) + str_fn(operand),
+        evaluate=lambda env, node: eval_unaryop(env, node),
+        pprint=lambda node: str_unaryop(node),
     ),
 
     ast.BoolOp      : Expr(
-        evaluate=lambda env, eval_fn, op, values: boolops[type(op)].evaluate(env, eval_fn, values),
-        pprint=lambda str_fn, op, values: boolops[type(op)].pprint(str_fn, values),
+        evaluate=lambda env, node: eval_boolop(env, node),
+        pprint=lambda node: str_boolop(node),
     ),
 
-    ast.Compare     : Expr(
-        evaluate=eval_comp,
-        pprint=print_comp,
-    ),
+    # ast.Compare     : Expr(
+    #     evaluate=eval_comp,
+    #     pprint=print_comp,
+    # ),
 
     ast.Name        : Expr(
-        evaluate=lambda env, eval_fn, ctx, id: env[id],
-        pprint=lambda str_fn, ctx, id: id,
+        evaluate=lambda env, node: env[node.id] if node.id in env else
+        Raise_(NameError, "name '%s' is not defined" % node.id),
+        pprint=lambda node: node.id,
     ),
 
     ast.NameConstant: Expr(
@@ -82,41 +50,41 @@ EXPRS = {
     ),
 
     ast.Num         : Expr(
-        evaluate=lambda env, eval_fn, n: n,
-        pprint=lambda str_fn, n: str(n),
+        evaluate=lambda env, node: node.n,
+        pprint=lambda node: str(node.n),
     ),
 
     ast.Str         : Expr(
-        evaluate=lambda env, eval_fn, s: s,
-        pprint=lambda str_fn, s: "'" + s + "'",
+        evaluate=lambda env, node: node.s,
+        pprint=lambda node: "'" + node.s + "'",
     ),
 
     ast.List        : Expr(
-        evaluate=lambda env, eval_fn, ctx, elts: list(eval_fn(elt, env) for elt in elts),
-        pprint=lambda str_fn, ctx, elts: "[" + ", ".join(map(str_fn, elts)) + "]",
+        evaluate=lambda env, node: list(eval_expr(env, elt) for elt in node.elts),
+        pprint=lambda node: "[" + ", ".join(map(str_expr, node.elts)) + "]",
     ),
 
     ast.Set         : Expr(
-        evaluate=lambda env, eval_fn, elts: {eval_fn(elt, env) for elt in elts},
-        pprint=lambda str_fn, elts: "{" + ",".join([str_fn(elt) for elt in elts]) + "}",
+        evaluate=lambda env, node: {eval_expr(env, elt) for elt in node.elts},
+        pprint=lambda node: "{" + ", ".join(map(str_expr, node.elts)) + "}",
     ),
 
     ast.Tuple       : Expr(
-        evaluate=lambda env, eval_fn, ctx, elts: tuple(eval_fn(elt, env) for elt in elts),
-        pprint=lambda str_fn, ctx, elts: "(" + ", ".join([str_fn(elt) for elt in elts]) + ")",
+        evaluate=lambda env, node: tuple(eval_expr(env, elt) for elt in node.elts),
+        pprint=lambda node: "(" + ", ".join(map(str_expr, node.elts)) + ")",
     ),
 
     ast.Dict        : Expr(
-        evaluate=lambda env, eval_fn, keys, values: {eval_fn(key, env): eval_fn(value, env) for key, value in
-                                                     zip(keys, values)},
-        pprint=lambda str_fn, keys, values: "{" + ", ".join([str_fn(key) + ":" +
-                                                             str_fn(value) for key, value in zip(keys, values)]) + "}",
+        evaluate=lambda env, node:
+        {eval_expr(env, key): eval_expr(env, value) for key, value in zip(node.keys, node.values)},
+        pprint=lambda node: "{" + ", ".join(str_expr(key) + ":" +
+                                            str_expr(value) for key, value in zip(node.keys, node.values)) + "}",
     ),
 
     ast.Lambda      : Expr(
-        evaluate=lambda env, eval_fn, args, body: Lambda(body, dict(ast.iter_fields(args)), eval_fn, str_expr),
-        pprint=lambda str_fn, args, body: "lambda " + ",".join(
-            [x.arg for y in dict(ast.iter_fields(args)).values() if y for x in y]) + ": " + str_fn(body),
+        evaluate=lambda env, node: Lambda(node),
+        pprint=lambda node: "lambda " + ",".join(
+            [x.arg for y in dict(ast.iter_fields(node.args)).values() if y for x in y]) + ": " + str_expr(node.body),
     ),
 
     ast.Attribute   : Expr(
@@ -127,37 +95,39 @@ EXPRS = {
     ),
 
     ast.Call        : Expr(
-        evaluate=lambda env, eval_fn, func, args, keywords: call(func, args, keywords, env),
-        pprint=lambda str_fn, func, args, keywords:
-        str_fn(func) + "("
-        + ", ".join((list(map(str_fn, args)) if args else []) +
-                    [a + "=" + str_fn(b) for a, b in [(keyword.arg, keyword.value) for keyword in keywords]]) + ")",
+        evaluate=lambda env, node: eval_call(env, node),
+        pprint=lambda node: str_call(node),
     ),
 
     ast.ListComp    : Expr(
-        evaluate=lambda env, eval_fn, elt, generators:
-        [eval_fn(elt, genenv) for genenv in generate(generators, env, eval_fn)],
-        pprint=lambda str_fn, elt, generators: "[" + str_fn(elt) + " for " + str_generate(generators, str_fn) + "]",
+        evaluate=lambda env, node: [eval_expr(genenv, node.elt) for genenv in
+                                    eval_comprehensions(env, node.generators)],
+        pprint=lambda node: "[" + str_expr(node.elt) + " for " + str_comprehensions(node.generators) + "]",
     ),
 
     ast.DictComp    : Expr(
-        evaluate=lambda env, eval_fn, key, value, generators:
-        {eval_fn(key, genenv): eval_fn(value, genenv) for genenv in generate(generators, env, eval_fn)},
-        pprint=lambda str_fn, key, value, generators:
-        "{" + str_fn(key) + ":" + str_fn(value) + " for " + str_generate(generators, str_fn) + "}",
+        evaluate=lambda env, node:
+        {eval_expr(genenv, node.key): eval_expr(genenv, node.value) for genenv in
+         eval_comprehensions(env, node.generators)},
+        pprint=lambda node:
+        "{" + str_expr(node.key) + ":" + str_expr(node.value) + " for " + str_comprehensions(node.generators) + "}",
     ),
 
     ast.SetComp     : Expr(
-        evaluate=lambda env, eval_fn, elt, generators:
-        {eval_fn(elt, genenv) for genenv in generate(generators, env, eval_fn)},
-        pprint=lambda str_fn, elt, generators: "{" + str_fn(elt) + " for " + str_generate(generators, str_fn) + "}",
+        evaluate=lambda env, node:
+        {eval_expr(genenv, node.elt) for genenv in eval_comprehensions(env, node.generators)},
+        pprint=lambda node: "{" + str_expr(node.elt) + " for " + str_comprehensions(node.generators) + "}",
+    ),
+
+    ast.GeneratorExp: Expr(
+        evaluate=lambda env, node: (eval_expr(genenv, node.elt) for genenv in
+                                    eval_comprehensions(env, node.generators)),
+        pprint=lambda node: "(" + str_expr(node.elt) + " for " + str_comprehensions(node.generators) + ")",
     ),
 
     ast.Subscript   : Expr(
-        evaluate=lambda env, eval_fn, ctx, value, slice:
-        Slices[type(slice)].evaluate(eval_fn=eval_fn, value_=value, env=env, **dict(ast.iter_fields(slice))),
-        pprint=lambda str_fn, ctx, value, slice:
-        Slices[type(slice)].pprint(str_fn=str_fn, value_=value, **dict(ast.iter_fields(slice))),
+        evaluate=lambda env, node: eval_expr(env, node.value)[eval_slice(env, node.slice)],
+        pprint=lambda node: str_expr(node.value) + "[" + str_slice(node.slice) + "]"
     ),
 
     ast.IfExp       : Expr(

@@ -1,7 +1,7 @@
 import ast
 import unittest
 
-from operations.bin_ops import BIN_OPS
+from operations.operator import BIN_OPS
 
 # An id function is useful for testing.
 eval_fn = lambda x, _: x
