@@ -15,6 +15,7 @@ def Raise_(exc, arg):
 
 
 
+
 Expr = namedtuple('Expr', ['evaluate', 'pprint'])
 
 exprs = {
@@ -46,7 +47,7 @@ exprs = {
 
     ast.NameConstant: Expr(
         evaluate=lambda env, node: node.value,
-        pprint=lambda str_fn, value: str(value),
+        pprint=lambda node: str(node.value),
     ),
 
     ast.Num         : Expr(

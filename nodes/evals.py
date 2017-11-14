@@ -33,11 +33,11 @@ def eval_all(env, node):
 
 
 def eval_boolop(env, node: ast.boolop):
-    return boolops[type(node.op)].evaluate(env, node)
+    return boolops[type(node.op)].evaluate(env, node.operand)
 
 
 def str_boolop(node: ast.boolop):
-    return boolops[type(node).op].pprint(node)
+    return boolops[type(node).op].pprint(node.operand)
 
 
 def eval_expr(env, node: ast.expr):
@@ -71,7 +71,7 @@ def str_op(node: ast.operator):
 
 
 def eval_unaryop(env, node: ast.unaryop):
-    return unaryops[type(node.op)].evaluate(env, node)
+    return unaryops[type(node.op)].evaluate(env, node.operand)
 
 
 def str_unaryop(node: ast.unaryop):
@@ -163,12 +163,12 @@ def str_cmpop(node):
     return r
 
 
-from nodes.bind import bind
-from nodes.boolop import boolops
-from nodes.expr import exprs
-from nodes.stmt import stmts
-from nodes.operator import operators
-from nodes.unaryop import unaryops
-from nodes.slice import slices
-from nodes.Lambda import Lambda
-from nodes.cmpops import cmpops
+from .bind import bind
+from .expr import exprs
+from .stmt import stmts
+from .operator import operators
+from .unaryop import unaryops
+from .slice import slices
+from .Lambda import Lambda
+from .cmpops import cmpops
+from .boolop import boolops
