@@ -1,7 +1,7 @@
 import ast
 from types import ModuleType
 
-from global_env import globalenv
+from seval.global_env import globalenv
 
 
 def eval_all(env, node):
