@@ -3,11 +3,11 @@ import atexit
 import os
 import sys
 
+import global_env
 import readline
 
-import global_env
-from repls import readline_completer
 from seval import parse_string
+from seval.repls import readline_completer
 
 # Make the history file hidden on UNIX type operating systems
 if sys.platform == "win32":
@@ -116,7 +116,7 @@ class SevalTTY:
 
 
 def main():
-    seval_e = global_env.SevalEnv
+    seval_e = global_env.globalenv
     seval_r = SevalTTY(seval_e)
     atexit.register(seval_r.save_history)
 
