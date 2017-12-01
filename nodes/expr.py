@@ -3,7 +3,8 @@ from collections import namedtuple
 
 from .Lambda import Lambda
 from .evals import eval_expr, str_expr, eval_boolop, str_boolop, eval_op, str_op, eval_unaryop, str_unaryop, \
-    eval_comprehensions, str_comprehensions, eval_slice, str_slice, eval_call, str_call, eval_cmpop, str_cmpop
+    eval_comprehensions, str_comprehensions, eval_slice, str_slice, eval_call, str_call, eval_cmpop, str_cmpop, \
+    eval_name, eval_attribute
 
 
 def raise_(text):
@@ -40,8 +41,7 @@ exprs = {
     ),
 
     ast.Name        : Expr(
-        evaluate=lambda env, node: env[node.id] if node.id in env else
-        Raise_(NameError, "name '%s' is not defined" % node.id),
+        evaluate=lambda env, node: eval_name(env, node),
         pprint=lambda node: node.id,
     ),
 
@@ -89,9 +89,7 @@ exprs = {
     ),
 
     ast.Attribute   : Expr(
-        evaluate=lambda env, eval_fn, value, attr, ctx:
-        (getattr(eval_fn(value, env), attr) if isinstance(value, ast.Attribute) else getattr(eval_fn(value, env), attr))
-        if not attr.startswith("__") else raise_("access to private fields is disallowed"),
+        evaluate=lambda env, node: eval_attribute(env, node),
         pprint=lambda str_fn, value, attr, ctx: str_fn(value) + "." + attr
     ),
 
@@ -132,8 +130,8 @@ exprs = {
     ),
 
     ast.IfExp       : Expr(
-        evaluate=lambda env, eval_fn, test, body, orelse:
-        eval_fn(body, env) if eval_fn(test, env) else eval_fn(orelse, env),
+        evaluate=lambda env, node:
+        eval_expr(env, node.body) if eval_expr(env, node.test) else eval_expr(env, node.orelse),
         pprint=lambda str_fn, test, body, orelse: str_fn(body) + " if " + str_fn(test) + " else " + str_fn(orelse),
     ),
 }

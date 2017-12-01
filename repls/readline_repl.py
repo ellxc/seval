@@ -5,7 +5,7 @@ import sys
 
 import readline
 
-import seval_env
+import global_env
 from repls import readline_completer
 from seval import parse_string
 
@@ -116,7 +116,7 @@ class SevalTTY:
 
 
 def main():
-    seval_e = seval_env.SevalEnv
+    seval_e = global_env.SevalEnv
     seval_r = SevalTTY(seval_e)
     atexit.register(seval_r.save_history)
 

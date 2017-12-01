@@ -1,4 +1,7 @@
 import ast
+from types import ModuleType
+
+from global_env import globalenv
 
 
 def eval_all(env, node):
@@ -33,17 +36,18 @@ def eval_all(env, node):
 
 
 def eval_boolop(env, node: ast.boolop):
-    return boolops[type(node.op)].evaluate(env, node.operand)
+    return boolops[type(node.op)].evaluate(env, node)
 
 
 def str_boolop(node: ast.boolop):
-    return boolops[type(node).op].pprint(node.operand)
+    return boolops[type(node).op].pprint(node)
 
 
-def eval_expr(env, node: ast.expr):
+def eval_expr(env, node: ast.expr, blacklist=[]):
     t = exprs[type(node)].evaluate(env, node)
-    # if type(t) is ModuleType and t.__name__ in blacklist or hasattr(t,"__module__") and t.__module__ in blacklist or t.__class__.__module__ in blacklist:
-    #     raise Exception("naughty")
+    if type(t) is ModuleType and t.__name__ in blacklist or hasattr(t,
+                                                                    "__module__") and t.__module__ in blacklist or t.__class__.__module__ in blacklist:
+        raise Exception("naughty")
     return t
 
 
@@ -51,10 +55,11 @@ def str_expr(node: ast.expr):
     return exprs[type(node)].pprint(node)
 
 
-def eval_stmt(env, node: ast.stmt):
+def eval_stmt(env, node: ast.stmt, blacklist=[]):
     t = stmts[type(node)].evaluate(env, node)
-    # if type(t) is ModuleType and t.__name__ in blacklist or hasattr(t,   "__module__") and t.__module__ in blacklist or t.__class__.__module__ in blacklist:
-    #     raise Exception("naughty")
+    if type(t) is ModuleType and t.__name__ in blacklist or hasattr(t,
+                                                                    "__module__") and t.__module__ in blacklist or t.__class__.__module__ in blacklist:
+        raise Exception("naughty")
     return t
 
 
@@ -118,7 +123,7 @@ def str_call(node: ast.Call):
                                                   [(keyword.arg, keyword.value) for keyword in node.keywords]]) + ")"
 
 
-def eval_assign(env, node: ast.Assign):
+def eval_assign(env, node: ast.Assign):  # TODO allow starred assignments
     val = eval_expr(env, node.value)
     for x in node.targets:
         if isinstance(x, ast.Attribute):
@@ -143,10 +148,18 @@ def eval_del(env, node):
                 raise Exception("access to private fields is disallowed")
             delattr(eval_expr(env, x.value), x.attr)
         elif isinstance(x, ast.Name):
-            env.pop(x.id)
+            if x.id in env:
+                env.pop(x.id)
+            elif x.id in globalenv:
+                raise NameError("name '%s' is global")
+            else:
+                raise NameError("name '%s' is not defined")
         elif isinstance(x, ast.Subscript):
             del eval_expr(env, x.value)[eval_slice(x.slice, env)]
 
+
+def str_del(node):
+    return "del " + ", ".join(map(str_expr, node.targets))
 
 def eval_cmpop(env, node):
     comparisons = zip([node.left] + node.comparators, node.ops, node.comparators)
@@ -162,6 +175,23 @@ def str_cmpop(node):
     r = " ".join(rs)
     return r
 
+
+def eval_name(env, node):
+    if node.id in env:
+        return env[node.id]
+    elif node.id in globalenv:
+        return globalenv[node.id]
+    else:
+        raise NameError("name '%s' is not defined" % node.id)
+
+
+def eval_attribute(env, node):
+    if node.attr.startswith("__"):
+        raise PermissionError("access to private fields is disallowed")
+    else:
+        return getattr(eval_expr(env, node.value), node.attr)
+        # ( if isinstance(value, ast.Attribute) else getattr(eval_fn(value, env), attr))
+        # if not attr.startswith("__") else raise_("access to private fields is disallowed"),
 
 from .bind import bind
 from .expr import exprs

@@ -13,8 +13,8 @@ from ptpython.python_input import PythonCommandLineInterface, PythonInput
 from pygments.lexers.python import PythonTracebackLexer
 from pygments.styles.default import DefaultStyle
 
+from global_env import globalenv
 from seval import parse_string
-from seval_env import SevalEnv
 
 
 class BodgedPythonCompleter(PythonCompleter):
@@ -73,7 +73,7 @@ def _handle_exception(cli, e, style=style_from_pygments(DefaultStyle)):
 
 def main():
     locals_ = {}
-    globals_ = SevalEnv
+    globals_ = globalenv
     eventloop = create_eventloop()
     try:
         python_input = PythonInput(get_globals=lambda: globals_, get_locals=lambda: locals_,
@@ -85,7 +85,7 @@ def main():
             if python_code.text == "exit":
                 break
             try:
-                result, env = parse_string(globals_, python_code.text)
+                result, env = parse_string(locals_, python_code.text)
                 for x in result:
                     print(repr(x))
             except Exception as e:

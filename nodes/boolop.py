@@ -6,7 +6,7 @@ from .evals import str_expr, eval_expr
 
 def and_(env, node):
     for x in iter(node.values):
-        x = eval_expr(x, env)
+        x = eval_expr(env, x)
         if not x:
             return x
     return x
@@ -14,7 +14,7 @@ def and_(env, node):
 
 def or_(env, node):
     for x in iter(node.values):
-        x = eval_expr(x, env)
+        x = eval_expr(env, x)
         if x:
             return x
     return x

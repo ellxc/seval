@@ -1,9 +1,7 @@
 from seval import parse_string
-from seval_env import SevalEnv
-
 
 def main():
-    env = SevalEnv
+    env = {}
 
     while True:
         x = input("> ")

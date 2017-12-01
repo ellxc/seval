@@ -4,13 +4,11 @@ import json
 import math
 import random
 import re
-import sys
 import unicodedata
 from base64 import b64encode, b64decode
 from collections import Counter, namedtuple
-from sys import getrecursionlimit
 
-SevalEnv = {
+globalenv = {
     "itertools"  : itertools,
     "abs"        : abs,
     "all"        : all,
@@ -73,8 +71,5 @@ SevalEnv = {
     "Exception"  : Exception,
     "unicodedata": unicodedata,
     "b64"        : namedtuple('base64', ('b64encode', 'b64decode'))(b64encode, b64decode),
-    "sys"        : sys,
-    "a"          : getrecursionlimit,
 }
 
-SevalEnv["env"] = SevalEnv
