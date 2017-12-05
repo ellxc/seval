@@ -87,7 +87,8 @@ def eval_comprehensions(env, *nodes: ast.comprehension):
     if not nodes:
         yield env
     else:
-        [current], *next = nodes
+        current, *next = nodes
+        current = current[0]
         for it in eval_expr(env, current.iter):
             for genenv in eval_comprehensions(bind(current.target, it, env.copy()), *next):
                 if all(eval_expr(genenv, if_) for if_ in current.ifs):
