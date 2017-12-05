@@ -6,7 +6,7 @@ import sys
 import global_env
 import readline
 
-from seval import parse_string
+from seval.seval import parse_string
 from seval.repls import readline_completer
 
 # Make the history file hidden on UNIX type operating systems
