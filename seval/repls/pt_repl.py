@@ -13,7 +13,7 @@ from ptpython.python_input import PythonCommandLineInterface, PythonInput
 from pygments.lexers.python import PythonTracebackLexer
 from pygments.styles.default import DefaultStyle
 
-from seval import parse_string
+from seval.seval import parse_string
 from seval.global_env import globalenv
 
 
