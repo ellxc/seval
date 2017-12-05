@@ -100,27 +100,27 @@ exprs = {
 
     ast.ListComp    : Expr(
         evaluate=lambda env, node: [eval_expr(genenv, node.elt) for genenv in
-                                    eval_comprehensions(env, node.generators)],
+                                    eval_comprehensions(env, *node.generators)],
         pprint=lambda node: "[" + str_expr(node.elt) + " for " + str_comprehensions(node.generators) + "]",
     ),
 
     ast.DictComp    : Expr(
         evaluate=lambda env, node:
         {eval_expr(genenv, node.key): eval_expr(genenv, node.value) for genenv in
-         eval_comprehensions(env, node.generators)},
+         eval_comprehensions(env, *node.generators)},
         pprint=lambda node:
         "{" + str_expr(node.key) + ":" + str_expr(node.value) + " for " + str_comprehensions(node.generators) + "}",
     ),
 
     ast.SetComp     : Expr(
         evaluate=lambda env, node:
-        {eval_expr(genenv, node.elt) for genenv in eval_comprehensions(env, node.generators)},
+        {eval_expr(genenv, node.elt) for genenv in eval_comprehensions(env, *node.generators)},
         pprint=lambda node: "{" + str_expr(node.elt) + " for " + str_comprehensions(node.generators) + "}",
     ),
 
     ast.GeneratorExp: Expr(
         evaluate=lambda env, node: (eval_expr(genenv, node.elt) for genenv in
-                                    eval_comprehensions(env, node.generators)),
+                                    eval_comprehensions(env, *node.generators)),
         pprint=lambda node: "(" + str_expr(node.elt) + " for " + str_comprehensions(node.generators) + ")",
     ),
 
