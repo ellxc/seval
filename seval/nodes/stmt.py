@@ -1,7 +1,7 @@
 import ast
 from collections import namedtuple
 
-from .evals import eval_expr, str_expr, eval_assign, eval_augassign, eval_del, str_del
+from .evals import eval_expr, str_expr, eval_assign, eval_augassign, eval_annassign, eval_del, str_del
 
 Stmt = namedtuple('Stmt', ['evaluate', 'pprint'])
 
@@ -24,6 +24,11 @@ stmts = {
     ast.AugAssign  : Stmt(
         evaluate=eval_augassign,
         pprint=lambda node: str_expr(node.target) + "aug=" + str_expr(node.value)
+    ),
+
+    ast.AnnAssign: Stmt(
+        evaluate=eval_annassign,
+        pprint=lambda node: str_expr(node.target)+":type" + (" = %s" % str_expr(node.value) if node.value is not None else "")
     ),
 
     ast.Delete     : Stmt(

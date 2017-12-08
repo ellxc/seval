@@ -141,6 +141,13 @@ def eval_augassign(env, node):
     return eval_assign(env, val_)
 
 
+def eval_annassign(env, node):
+    if node.value is None:
+        return
+    val_ = ast.Assign(targets=[node.target], value=node.value)
+    return eval_assign(env, val_)
+
+
 def eval_del(env, node):
     for x in node.targets:
         if isinstance(x, ast.Attribute):
@@ -192,6 +199,15 @@ def eval_attribute(env, node):
         return getattr(eval_expr(env, node.value), node.attr)
         # ( if isinstance(value, ast.Attribute) else getattr(eval_fn(value, env), attr))
         # if not attr.startswith("__") else raise_("access to private fields is disallowed"),
+
+def eval_starred(env, node):
+    if isinstance(node.ctx, ast.Load):
+        raise SyntaxError("can't use starred expression here")
+
+
+
+
+
 
 from .bind import bind
 from .expr import exprs
