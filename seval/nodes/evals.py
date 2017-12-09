@@ -110,7 +110,7 @@ def str_slice(node: ast.slice):
 
 
 def eval_call(env, node: ast.Call):
-    args = [eval_expr(env, arg) for arg in node.args]
+    args = [arg for zarg in node.args for arg in (eval_expr(env, zarg.value) if isinstance(zarg, ast.Starred) else [eval_expr(env, zarg)])]
     kwargs = {keyword.arg: eval_expr(env, keyword.value) for keyword in node.keywords}
     func = eval_expr(env, node.func)
     if isinstance(func, Lambda):
@@ -125,7 +125,7 @@ def str_call(node: ast.Call):
                                                   [(keyword.arg, keyword.value) for keyword in node.keywords]]) + ")"
 
 
-def eval_assign(env, node: ast.Assign):  # TODO allow starred assignments
+def eval_assign(env, node: ast.Assign):
     val = eval_expr(env, node.value)
     for x in node.targets:
         if isinstance(x, ast.Attribute):
