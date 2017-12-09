@@ -44,6 +44,8 @@ def str_boolop(node: ast.boolop):
 
 
 def eval_expr(env, node: ast.expr, blacklist=[]):
+    if node is None:
+        return
     t = exprs[type(node)].evaluate(env, node)
     if type(t) is ModuleType and t.__name__ in blacklist or hasattr(t,
                                                                     "__module__") and t.__module__ in blacklist or t.__class__.__module__ in blacklist:
