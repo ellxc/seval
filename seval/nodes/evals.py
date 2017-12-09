@@ -1,5 +1,6 @@
 import ast
 from types import ModuleType
+from collections import Mapping
 
 from seval.global_env import globalenv
 
@@ -111,7 +112,19 @@ def str_slice(node: ast.slice):
 
 def eval_call(env, node: ast.Call):
     args = [arg for zarg in node.args for arg in (eval_expr(env, zarg.value) if isinstance(zarg, ast.Starred) else [eval_expr(env, zarg)])]
-    kwargs = {keyword.arg: eval_expr(env, keyword.value) for keyword in node.keywords}
+    kwargs = {}
+    for keyword in node.keywords:
+        if keyword.arg is not None:
+            if keyword.arg in kwargs:
+                raise TypeError("got multiple values for keyword argument %r" % keyword.arg)
+            kwargs[keyword.arg] = eval_expr(env, keyword.value)
+        else:
+            x = eval_expr(env, keyword.value)
+            if isinstance(x, Mapping):
+                kwargs.update(x)
+            else:
+                raise TypeError("argument after ** must be a mapping not %s" % type(x))
+
     func = eval_expr(env, node.func)
     if isinstance(func, Lambda):
         return func(env)(*args, **kwargs)
