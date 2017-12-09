@@ -1,7 +1,7 @@
 import ast
 import unittest
 
-from seval.nodes import operators
+from seval.nodes.operator import operators
 
 # An id function is useful for testing.
 env = {}

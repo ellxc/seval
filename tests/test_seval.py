@@ -1,6 +1,6 @@
 import unittest
 
-from seval import parse_string
+from seval.seval import parse_string
 
 
 class SevalTest(unittest.TestCase):

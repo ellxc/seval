@@ -1,7 +1,7 @@
 import ast
 import unittest
 
-from seval.nodes import unaryops
+from seval.nodes.unaryop import unaryops
 
 
 class UnaryOpsTest(unittest.TestCase):
