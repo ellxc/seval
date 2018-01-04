@@ -1,7 +1,7 @@
 import ast
 from collections import OrderedDict
 
-from seval.nodes import bind
+from seval.nodes.bind import bind
 from .evals import eval_expr, str_expr
 
 
