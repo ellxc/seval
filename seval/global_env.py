@@ -55,7 +55,6 @@ globalenv = {
     "type"       : type,
     "zip"        : zip,
     "Counter"    : Counter,
-    "json"       : json,
     "sin"        : math.sin,
     "cos"        : math.cos,
     "tan"        : math.tan,
