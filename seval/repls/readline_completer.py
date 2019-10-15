@@ -31,7 +31,7 @@ Notes:
 
 import atexit
 
-import __main__
+import seval.__main__
 
 __all__ = ["Completer"]
 
@@ -74,7 +74,7 @@ class Completer:
 
         """
         if self.use_main_ns:
-            self.namespace = __main__.__dict__
+            self.namespace = seval.__main__.__dict__
 
         if not text.strip():
             if state == 0:

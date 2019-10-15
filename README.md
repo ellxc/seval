@@ -18,16 +18,22 @@ Exception: access to private fields is disallowed
 `seval` has been designed to provide a programming interface over IRC to enable
 writing macros and plugins for [piperbot](https://github.com/ellxc/piperbot).
 
+## Installation
+
+-- todo
+
 ## Caveat
 
 `seval` has not been formally tested, and may have bugs. It has been implemented
 to attempt to ensure safe sandboxed execution, but there could be bugs. Use at
 your own risk.
 
-## `repl.py`
+## repl
 
 There is a `repl` using a GNU Readline interface. You'll need a readline
 implementation installed from pip. `anyreadline` is a metapackage which installs
 a readline library appropriate for your operating system. The `gnureadline`
-package is incompatible with Windows.
+package is incompatible with Windows. You can get to the repl by executing the
+module with the '-m' flag of the python interpretter.
+
 

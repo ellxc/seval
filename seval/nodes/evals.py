@@ -2,7 +2,7 @@ import ast
 from types import ModuleType
 from collections import Mapping
 
-from seval.global_env import globalenv
+from seval.constants.global_env import globalenv
 
 
 def eval_all(env, node):
@@ -51,7 +51,9 @@ def eval_expr(env, node: ast.expr, blacklist=[]):
     if type(t) is ModuleType and t.__name__ in blacklist or hasattr(t,
                                                                     "__module__") and t.__module__ in blacklist or t.__class__.__module__ in blacklist:
         raise Exception("naughty")
+
     return t
+
 
 
 def str_expr(node: ast.expr):

@@ -1,7 +1,7 @@
 import ast
 
+from seval.constants.blacklist import blacklist
 from seval.nodes.evals import eval_stmt
-from seval.blacklist import blacklist
 
 def parse_string(env, text):
     body = ast.parse(text, mode='single').body

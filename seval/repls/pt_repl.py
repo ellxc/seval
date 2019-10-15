@@ -14,7 +14,7 @@ from pygments.lexers.python import PythonTracebackLexer
 from pygments.styles.default import DefaultStyle
 
 from seval.seval import parse_string
-from seval.global_env import globalenv
+from seval.constants.global_env import globalenv
 
 
 class BodgedPythonCompleter(PythonCompleter):

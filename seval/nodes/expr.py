@@ -38,6 +38,11 @@ exprs = {
         pprint=lambda node: node.id,
     ),
 
+    ast.Constant: Expr(
+        evaluate=lambda env, node: node.value,
+        pprint=lambda node: str(node.value),
+    ),
+
     ast.NameConstant: Expr(
         evaluate=lambda env, node: node.value,
         pprint=lambda node: str(node.value),

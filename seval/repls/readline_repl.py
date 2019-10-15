@@ -3,11 +3,11 @@ import atexit
 import os
 import sys
 
-import global_env
 import readline
 
 from seval.seval import parse_string
 from seval.repls import readline_completer
+from seval.constants import global_env
 
 # Make the history file hidden on UNIX type operating systems
 if sys.platform == "win32":

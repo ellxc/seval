@@ -1,5 +1,6 @@
 from seval.seval import parse_string
-from seval.globalenv import globalenv
+from seval.constants.global_env import globalenv
+
 
 def main():
     env = globalenv
