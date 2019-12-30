@@ -13,5 +13,17 @@ def parse_string(env, text):
     return responses, env
 
 
-def parse_file(self, file, mode='exec'):
-    pass
+def parse_file(file):
+    f = open(file, "r")
+    fr = f.read()
+    body = ast.parse(fr, mode='exec').body
+    print(body)
+    # responses = []
+    env = {}
+    for stmt_or_expr in body:
+        response = eval_stmt(env, stmt_or_expr, blacklist)
+        if response is not None:
+            print(response)
+            # responses.append(response)
+
+    # return responses, env

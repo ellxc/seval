@@ -1,4 +1,6 @@
 def get_repl():
+    print("getting repl...")
+    input()
     import sys
     if sys.stdin.isatty():
         try:

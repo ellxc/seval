@@ -128,8 +128,8 @@ def eval_call(env, node: ast.Call):
                 raise TypeError("argument after ** must be a mapping not %s" % type(x))
 
     func = eval_expr(env, node.func)
-    if isinstance(func, Lambda):
-        return func(env)(*args, **kwargs)
+    if 0:#isinstance(func, Lambda) or isinstance(func, Function):
+        return func(*args, __env__=env, **kwargs)
     else:
         return func(*args, **kwargs)
 
@@ -232,6 +232,6 @@ from .stmt import stmts
 from .operator import operators
 from .unaryop import unaryops
 from .slice import slices
-from .Lambda import Lambda
+from .Lambda import Lambda, Function
 from .cmpops import cmpops
 from .boolop import boolops

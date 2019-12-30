@@ -2,13 +2,14 @@ import ast
 from collections import namedtuple
 
 from .evals import eval_expr, str_expr, eval_assign, eval_augassign, eval_annassign, eval_del, str_del
+from .Lambda import Function
 
 Stmt = namedtuple('Stmt', ['evaluate', 'pprint'])
 
 stmts = {
     ast.FunctionDef: Stmt(
-        evaluate=lambda env, node: node.name,
-        pprint=lambda node: node.name,
+        evaluate=lambda env, node: env.update([(node.name,Function(node, env))]) ,
+        pprint=lambda node: repr(Function(node)),
     ),
 
     ast.Expr       : Stmt(

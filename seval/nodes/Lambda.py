@@ -1,8 +1,8 @@
 import ast
-from collections import OrderedDict
+from collections import OrderedDict, ChainMap
 
 from seval.nodes.bind import bind
-from .evals import eval_expr, str_expr
+from .evals import eval_expr, str_expr, eval_stmt
 
 
 def getenv(funcname, args, vararg, kwarg, defaults, call_args, call_kwargs,
@@ -82,13 +82,10 @@ class Lambda:
         self.body = node.body
         self.fields = dict(ast.iter_fields(node.args))
 
-    def __call__(self, env):
-        def wrapper(*args, **kwargs):
-            return eval_expr(
-                getenv(funcname="<lambda>", env=env, call_args=args, call_kwargs=kwargs,
-                       **self.fields), self.body)
-
-        return wrapper
+    def __call__(self, *args, __env__=None, **kwargs):
+        return eval_expr(
+            getenv(funcname="<lambda>", env=__env__ if __env__ is not None else {}, call_args=args, call_kwargs=kwargs,
+                   **self.fields), self.body)
 
     def __repr__(self):
         ret = []
@@ -116,3 +113,56 @@ class Lambda:
                     ret.append(p.arg)
 
         return "<lambda " + ", ".join(ret) + ": " + str_expr(self.body) + ">"
+
+class Function:
+    def __init__(self, node, env):
+        self.non_locals = env
+        self.body = node.body
+        self.returns = node.returns
+        self.decorators = node.decorator_list
+        self.fields = dict(ast.iter_fields(node.args))
+
+    def __call__(self, *args, __env__=None, **kwargs):
+
+        ChainMap
+        if __env__ is None:
+            env = self.env
+        else:
+            env = {}
+            env.update(self.env)
+            env.update(__env__)
+
+        env = getenv(funcname="<lambda>", env=env, call_args=args, call_kwargs=kwargs, **self.fields)
+
+        for s in self.body:
+            if type(s) is ast.Return:
+                return eval_expr(env, s.value)
+            else:
+                eval_stmt(env, s)
+
+
+    def __repr__(self):
+        ret = []
+        for x in self.fields["args"][slice(0, (-(len(self.fields["defaults"]))) or len(self.fields["args"]))]:
+            ret.append(x.arg)
+        for x in reversed(["{}={}".format(x.arg, str_expr(y)) for x, y in
+                           zip(reversed(self.fields["args"]), reversed(self.fields["defaults"]))]):
+            ret.append(x)
+
+        if self.fields["vararg"] is not None:
+            vararg = "*" + self.fields["vararg"].arg
+            ret.append(vararg)
+
+        if self.fields["kwarg"] is not None:
+            kwarg = "**" + self.fields["kwarg"].arg
+            ret.append(kwarg)
+
+        if self.fields["kwonlyargs"]:
+            ret.append("*")
+            for p, d in zip(self.fields["kwonlyargs"], self.fields["kw_defaults"]):
+                if d is not None:
+                    ret.append("{}={}".format(p.arg, str_expr(d)))
+                else:
+                    ret.append(p.arg)
+
+        return "<Function definition >" #+ ", ".join(ret) + ": " + ";".join(str_expr(s) for s in self.body) + ">"

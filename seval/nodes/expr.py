@@ -149,4 +149,9 @@ exprs = {
         evaluate=lambda env, node: eval_starred(env, node),
         pprint=lambda node: "*"+str_expr(node.value)
     ),
+
+    ast.Return: Expr(
+        evaluate=lambda env, node: node.value,
+        pprint=lambda node: "return " + str_expr(node.value)
+    ),
 }
