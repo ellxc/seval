@@ -21,7 +21,7 @@ c = 1
 def a():
     c = 4
     def b():
-        c += 1
+        c = 1
         return c
     return b
 

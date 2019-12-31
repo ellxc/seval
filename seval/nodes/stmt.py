@@ -8,8 +8,8 @@ Stmt = namedtuple('Stmt', ['evaluate', 'pprint'])
 
 stmts = {
     ast.FunctionDef: Stmt(
-        evaluate=lambda env, node: env.update([(node.name,Function(node, env))]) ,
-        pprint=lambda node: repr(Function(node)),
+        evaluate=lambda env, node: env.update([(node.name, Function(node, env))]),
+        pprint=lambda node: f"<function def {node.name}>",
     ),
 
     ast.Expr       : Stmt(

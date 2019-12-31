@@ -1,6 +1,6 @@
 import ast
 from types import ModuleType
-from collections import Mapping
+from collections import Mapping, ChainMap
 
 from seval.constants.global_env import globalenv
 
@@ -153,7 +153,10 @@ def eval_assign(env, node: ast.Assign):
             bind(x, val, env)
 
 
-def eval_augassign(env, node):
+def eval_augassign(env: ChainMap, node):
+    if node.target.id not in env.maps[0]:
+        print(env)
+        raise UnboundLocalError(f"local variable '{node.target.id}' referenced before assignment")
     val_ = ast.Assign(targets=[node.target], value=ast.BinOp(left=node.target, op=node.op, right=node.value))
     return eval_assign(env, val_)
 

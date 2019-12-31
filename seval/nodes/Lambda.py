@@ -6,7 +6,7 @@ from .evals import eval_expr, str_expr, eval_stmt
 
 
 def getenv(funcname, args, vararg, kwarg, defaults, call_args, call_kwargs,
-           env, kwonlyargs=None, kw_defaults=None):
+           env, posonlyargs=None, kwonlyargs=None, kw_defaults=None):
     subenv = OrderedDict()
 
     for param, arg in zip(args, call_args):
@@ -71,10 +71,10 @@ def getenv(funcname, args, vararg, kwarg, defaults, call_args, call_kwargs,
                          ((", " + ", ".join(["'%s'" % x for x in kwmissing[1:-1]])) if len(kwmissing) > 2 else "") +
                          (" and '%s'" % kwmissing[-1] if len(kwmissing) > 1 else "")))
 
-    for key, value in env.items():
-        if key not in newenv:
-            newenv[key] = value
-    return newenv
+    # for key, value in env.items():
+    #     if key not in newenv:
+    #         newenv[key] = value
+    return ChainMap(newenv, env)
 
 
 class Lambda:
@@ -115,23 +115,15 @@ class Lambda:
         return "<lambda " + ", ".join(ret) + ": " + str_expr(self.body) + ">"
 
 class Function:
-    def __init__(self, node, env):
+    def __init__(self, node: ast.FunctionDef, env: ChainMap):
         self.non_locals = env
         self.body = node.body
         self.returns = node.returns
         self.decorators = node.decorator_list
         self.fields = dict(ast.iter_fields(node.args))
 
-    def __call__(self, *args, __env__=None, **kwargs):
-
-        ChainMap
-        if __env__ is None:
-            env = self.env
-        else:
-            env = {}
-            env.update(self.env)
-            env.update(__env__)
-
+    def __call__(self, *args, **kwargs):
+        env = self.non_locals.new_child()
         env = getenv(funcname="<lambda>", env=env, call_args=args, call_kwargs=kwargs, **self.fields)
 
         for s in self.body:

@@ -1,5 +1,5 @@
 import ast
-
+from collections import ChainMap
 from seval.constants.blacklist import blacklist
 from seval.nodes.evals import eval_stmt
 
@@ -19,7 +19,7 @@ def parse_file(file):
     body = ast.parse(fr, mode='exec').body
     print(body)
     # responses = []
-    env = {}
+    env = ChainMap()
     for stmt_or_expr in body:
         response = eval_stmt(env, stmt_or_expr, blacklist)
         if response is not None:

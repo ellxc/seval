@@ -35,7 +35,7 @@ def bind_iter(elts, ctx, rhs, env):
             bind(elt, subrhs, env)
 
 
-def bind_arg(arg, annotation, rhs, env):
+def bind_arg(arg, annotation, rhs, env, type_comment=None):
     env[arg] = rhs
 
 

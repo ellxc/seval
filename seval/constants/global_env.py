@@ -6,9 +6,9 @@ import random
 import re
 import unicodedata
 from base64 import b64encode, b64decode
-from collections import Counter, namedtuple
+from collections import Counter, namedtuple, ChainMap
 
-globalenv = {
+globalenv = ChainMap({
     "itertools"  : itertools,
     "abs"        : abs,
     "all"        : all,
@@ -70,5 +70,5 @@ globalenv = {
     "Exception"  : Exception,
     "unicodedata": unicodedata,
     "b64"        : namedtuple('base64', ('b64encode', 'b64decode'))(b64encode, b64decode),
-}
+})
 
