@@ -81,7 +81,7 @@ exprs = {
     ),
 
     ast.Lambda: Expr(
-        evaluate=lambda env, node: Lambda(node),
+        evaluate=Lambda,
         pprint=lambda node: "lambda " + ",".join(
             [x.arg for y in dict(ast.iter_fields(node.args)).values() if y for x in y]) + ": " + str_expr(node.body),
     ),
@@ -97,9 +97,8 @@ exprs = {
     ),
 
     ast.ListComp: Expr(
-        evaluate=lambda env, node: [eval_expr(genenv, node.elt) for genenv in
-                                    eval_comprehensions(env, *node.generators)],
-        pprint=lambda node: "[" + str_expr(node.elt) + " for " + str_comprehensions(node.generators) + "]",
+     evaluate=lambda env, node: [eval_expr(genenv, node.elt) for genenv in eval_comprehensions(env, *node.generators)],
+     pprint=lambda node: "[" + str_expr(node.elt) + " for " + str_comprehensions(node.generators) + "]",
     ),
 
     ast.DictComp: Expr(

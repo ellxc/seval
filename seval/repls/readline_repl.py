@@ -99,7 +99,7 @@ class SevalTTY:
 
             except SyntaxError as e:
                 print("Syntax error.")
-                print("{}\n{}^".format(e.text, " " * (e.offset)))
+                print("{}{}^".format(e.text+"\n" if e.text else "", " " * (e.offset)))
                 print(e)
 
             except KeyboardInterrupt:

@@ -7,6 +7,30 @@ import re
 import unicodedata
 from base64 import b64encode, b64decode
 from collections import Counter, namedtuple, ChainMap
+import os
+import base64
+
+def _range(*args):
+    if len(args) == 1:
+        stop = args[0]
+        start = 0
+        step = 1
+    elif len(args) ==2:
+        start = args[0]
+        stop = args[1]
+        step = 1
+    elif len(args) ==3:
+        start = args[0]
+        stop = args[1]
+        step = args[2]
+    else:
+        raise Exception("incorrect usage of range")
+
+    if (abs(stop-step))/step >=1000:
+        raise Exception("range used with too large numbers")
+
+    return range(start, stop, step)
+
 
 globalenv = ChainMap({
     "itertools"  : itertools,
@@ -42,7 +66,7 @@ globalenv = ChainMap({
     "oct"        : oct,
     "ord"        : ord,
     "pow"        : pow,
-    "range"      : range,
+    "range"      : _range,
     "repr"       : repr,
     "reversed"   : reversed,
     "round"      : round,
@@ -70,5 +94,10 @@ globalenv = ChainMap({
     "Exception"  : Exception,
     "unicodedata": unicodedata,
     "b64"        : namedtuple('base64', ('b64encode', 'b64decode'))(b64encode, b64decode),
+    "print"      : (lambda *x: print(*x)),
+    "os" : os,
+    "base64": base64,
+    "dict_with_os": {"os":os},
+    "external_function": (lambda x: x()),
 })
 

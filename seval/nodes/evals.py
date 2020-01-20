@@ -3,7 +3,10 @@ from types import ModuleType
 from collections import Mapping, ChainMap
 
 from seval.constants.global_env import globalenv
+from seval.constants.blacklist import blacklist
 
+class ret_exception(Exception):
+    pass
 
 def eval_all(env, node):
     if isinstance(node, ast.stmt):
@@ -44,13 +47,13 @@ def str_boolop(node: ast.boolop):
     return boolops[type(node).op].pprint(node)
 
 
-def eval_expr(env, node: ast.expr, blacklist=[]):
+def eval_expr(env, node: ast.expr, blacklist=blacklist):
     if node is None:
         return
     t = exprs[type(node)].evaluate(env, node)
-    if type(t) is ModuleType and t.__name__ in blacklist or hasattr(t,
-                                                                    "__module__") and t.__module__ in blacklist or t.__class__.__module__ in blacklist:
-        raise Exception("naughty")
+    if type(t) is ModuleType and t.__name__ in blacklist or \
+            hasattr(t, "__module__") and t.__module__ in blacklist or t.__class__.__module__ in blacklist:
+        raise Exception("use of this module/object is prohibited")
 
     return t
 
@@ -60,12 +63,16 @@ def str_expr(node: ast.expr):
     return exprs[type(node)].pprint(node)
 
 
-def eval_stmt(env, node: ast.stmt, blacklist=[]):
-    t = stmts[type(node)].evaluate(env, node)
-    if type(t) is ModuleType and t.__name__ in blacklist or hasattr(t,
-                                                                    "__module__") and t.__module__ in blacklist or t.__class__.__module__ in blacklist:
-        raise Exception("naughty")
-    return t
+def eval_stmt(env, node: ast.stmt, blacklist=blacklist):
+    try:
+        t = stmts[type(node)].evaluate(env, node)
+        if isinstance(t, ModuleType) and t.__name__ in blacklist or hasattr(t,
+                                                                            "__module__") and t.__module__ in blacklist or t.__class__.__module__ in blacklist:
+            raise Exception("use of this module/object is prohibited")
+        return t
+    except KeyError:
+        raise NotImplementedError(str(type(node)) + " on line: " + str(node.lineno))
+
 
 
 def str_stmt(node: ast.stmt):
@@ -88,13 +95,15 @@ def str_unaryop(node: ast.unaryop):
     return unaryops[type(node.op)].pprint(node)
 
 
-def eval_comprehensions(env, *nodes: ast.comprehension):
+def eval_comprehensions(env, *nodes: ast.comprehension, limit=3):
+    if limit < 0:
+        raise Exception("comprehension exceeded depth limit")
     if not nodes:
         yield env
     else:
         current, *next = nodes
         for it in eval_expr(env, current.iter):
-            for genenv in eval_comprehensions(bind(current.target, it, env.copy()), *next):
+            for genenv in eval_comprehensions(bind(current.target, it, env.copy()), *next, limit=limit-1):
                 if all(eval_expr(genenv, if_) for if_ in current.ifs):
                     yield genenv
 

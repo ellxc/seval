@@ -16,11 +16,12 @@ Exception: access to private fields is disallowed
 ## Purpose
 
 `seval` has been designed to provide a programming interface over IRC to enable
-writing macros and plugins for [piperbot](https://github.com/ellxc/piperbot).
+writing macros and plugins for [pyperbot](https://github.com/ellxc/pyperbot).
 
 ## Installation
 
--- todo
+This should be no different from any other python module, Seval has no external dependencies.
+`pip install git+git://github.com/ellxc/seval`
 
 ## Caveat
 
