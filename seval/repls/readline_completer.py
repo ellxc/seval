@@ -30,7 +30,7 @@ Notes:
 """
 
 import atexit
-
+from collections import Mapping
 import seval.__main__
 
 __all__ = ["Completer"]
@@ -52,7 +52,7 @@ class Completer:
         readline.set_completer(Completer(my_namespace).complete)
         """
 
-        if namespace and not isinstance(namespace, dict):
+        if namespace and not isinstance(namespace, Mapping):
             raise TypeError('namespace must be a dictionary')
 
         # Don't bind to namespace quite yet, but flag whether the user wants a

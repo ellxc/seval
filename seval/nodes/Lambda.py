@@ -2,8 +2,7 @@ import ast
 from collections import OrderedDict, ChainMap
 
 from seval.nodes.bind import bind
-from .evals import eval_expr, str_expr, eval_stmt
-
+from .evals import eval_expr, str_expr, eval_stmt, ret_exception
 
 def getenv(funcname, args, vararg, kwarg, defaults, call_args, call_kwargs,
            env, posonlyargs=None, kwonlyargs=None, kw_defaults=None):
@@ -44,7 +43,8 @@ def getenv(funcname, args, vararg, kwarg, defaults, call_args, call_kwargs,
     newenv = OrderedDict()
     if not kwonlyargs:
         for param, default in zip(args[::-1], defaults[::-1]):
-            bind(param, eval(default, env), newenv)
+            # print(default)
+            bind(param, eval_expr(env, default), newenv)
     else:
         for param, default in [(p, d) for p, d in zip(kwonlyargs, kw_defaults)]:
             if default is not None:
@@ -78,7 +78,8 @@ def getenv(funcname, args, vararg, kwarg, defaults, call_args, call_kwargs,
 
 
 class Lambda:
-    def __init__(self, node):
+    def __init__(self, env={}, node=None):
+        self.env = env
         self.body = node.body
         self.fields = dict(ast.iter_fields(node.args))
 
@@ -112,7 +113,7 @@ class Lambda:
                 else:
                     ret.append(p.arg)
 
-        return "<lambda " + ", ".join(ret) + ": " + str_expr(self.body) + ">"
+        return "<lambda " + ", ".join(ret) + ": " + " ... >"
 
 class Function:
     def __init__(self, node: ast.FunctionDef, env: ChainMap):
@@ -130,7 +131,11 @@ class Function:
             if type(s) is ast.Return:
                 return eval_expr(env, s.value)
             else:
-                eval_stmt(env, s)
+                try:
+                    eval_stmt(env, s)
+                except ret_exception as e:
+                    return e.args[0]
+
 
 
     def __repr__(self):

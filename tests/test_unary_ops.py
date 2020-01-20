@@ -1,8 +1,8 @@
 import ast
 import unittest
-
-from seval.nodes.unaryop import unaryops
-
+import seval
+from seval.nodes import unaryop
+unaryops = unaryop.unaryops
 
 class UnaryOpsTest(unittest.TestCase):
     def test_not(self):

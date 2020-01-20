@@ -16,11 +16,12 @@ Exception: access to private fields is disallowed
 ## Purpose
 
 `seval` has been designed to provide a programming interface over IRC to enable
-writing macros and plugins for [piperbot](https://github.com/ellxc/piperbot).
+writing macros and plugins for [pyperbot](https://github.com/ellxc/pyperbot).
 
 ## Installation
 
--- todo
+This should be no different from any other python module, Seval has no external dependencies.
+`pip install git+git://github.com/ellxc/seval`
 
 ## Caveat
 
@@ -34,6 +35,9 @@ There is a `repl` using a GNU Readline interface. You'll need a readline
 implementation installed from pip. `anyreadline` is a metapackage which installs
 a readline library appropriate for your operating system. The `gnureadline`
 package is incompatible with Windows. You can get to the repl by executing the
-module with the '-m' flag of the python interpretter.
+module with the '-m' flag of the python interpretter. `python -m seval`
 
+## file execution
+
+Running whole files can be acheived thusly `python -m seval <filename>`
 
